@@ -1,0 +1,2 @@
+INDEX VERSION 1.127+/Users/xiaruhao/Documents/CS61B/proj2/.metadata/.plugins/org.eclipse.jdt.core
+2042299209.index

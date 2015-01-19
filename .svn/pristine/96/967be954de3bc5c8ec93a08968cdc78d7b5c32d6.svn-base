@@ -1,0 +1,167 @@
+package jump61;
+
+import java.util.ArrayList;
+import java.util.Random;
+/** An automated Player.
+ *  @author Ruhao Xia
+ */
+class AI extends Player {
+
+    /** Time allotted to all but final search depth (milliseconds). */
+    private static final long TIME_LIMIT = 15000;
+
+    /** Number of calls to minmax between checks of elapsed time. */
+    private static final long TIME_CHECK_INTERVAL = 10000;
+
+    /** Number of milliseconds in one second. */
+    private static final double MILLIS = 1000.0;
+
+    /**  The type of strategy. */
+    private static enum Strategy { ONE_TWO, EASY, RANDOM, MINIMAX };
+
+    /**  Predefined strategy. */
+    private static final Strategy STRATEGY = Strategy.MINIMAX;
+
+    /**  The moves to be made in minimax are stored here. */
+    private ArrayList<Integer> _moves = new ArrayList<>();
+
+    /** A new player of GAME initially playing COLOR that chooses
+     *  moves automatically.
+     */
+
+    public AI(Game game, Side color) {
+        super(game, color);
+    }
+
+    @Override
+    void makeMove() {
+        Board b = getBoard();
+        int size = b.size();
+        double heur = 0;
+        MutableBoard m = new MutableBoard(size);
+        m.copy(b);
+        if (STRATEGY == Strategy.ONE_TWO) {
+            getGame().makeMove(1, 2);
+            getGame().reportMove(getSide(), 1, 2);
+        }
+        if (STRATEGY == Strategy.EASY) {
+            int row = 1;
+            int col = 1;
+            for (int i = 1; i < size + 1; i++) {
+                for (int j = 1; j < size + 1; j++) {
+                    if (m.isLegal(getSide(), i, j)) {
+                        m.addSpot(getSide(), i, j);
+                        if (heur < staticEval(getSide(), m)) {
+                            row = i;
+                            col = j;
+                            heur = staticEval(getSide(), m);
+                        }
+                        m.undo();
+                    }
+                }
+            }
+            getGame().makeMove(row, col);
+            getGame().reportMove(getSide(), row, col);
+        }
+        if (STRATEGY == Strategy.RANDOM) {
+            int move = chooseRand(size, b);
+            getGame().makeMove(move);
+            getGame().reportMove(getSide(), move);
+        }
+        if (STRATEGY == Strategy.MINIMAX) {
+            minmax(getSide(), m, 4, Double.MAX_VALUE, size);
+            Random indexG = new Random();
+            int index = indexG.nextInt(_moves.size());
+            getGame().makeMove(_moves.get(index));
+            getGame().reportMove(getSide(), _moves.get(index));
+        }
+    }
+
+
+    /** Return the minimum of CUTOFF and the minmax value of board B
+     *  (which must be mutable) for player P to a search depth of D
+     *  (where D == 0 denotes statically evaluating just the next move).
+     *  If MOVES is not null and CUTOFF is not exceeded, set MOVES to
+     *  a list of all highest-scoring moves for P; clear it if
+     *  non-null and CUTOFF is exceeded. the contents of B are
+     *  invariant over this call. SIZE is the size of B. */
+    private double minmax(Side p, Board b, int d,
+                                    double cutoff, int size) {
+        ArrayList<Integer> moves = new ArrayList<>();
+        if (!b.isLegal(p.opposite())) {
+            return Double.MAX_VALUE;
+        } else if (!b.isLegal(p)) {
+            return Double.MIN_VALUE;
+        } else if (d == 0) {
+            return guessBestMove(p, b, cutoff, size);
+        }
+        double heur = -1.0;
+        for (int n = 0; n < size * size; n++) {
+            if (b.isLegal(p, n)) {
+                b.addSpot(p, n);
+                double currentheur;
+                double responseheur =
+                        minmax(p.opposite(), b, d - 1, 0, size);
+                currentheur = 1.0 / responseheur;
+                if (currentheur >= heur
+                    && !moves.contains(n)) {
+                    if (currentheur > heur) {
+                        heur = currentheur;
+                        moves = new ArrayList<Integer>();
+                    }
+                    moves.add(n);
+                }
+                b.undo();
+            }
+        }
+        _moves = moves;
+        return heur;
+    }
+    /** Return the heuristic values of the board B when depth = 0;
+     *  CUTOFF, SIDE, P, SIZE. */
+    private double guessBestMove(Side p, Board b,
+                                double cutoff, int size) {
+        ArrayList<Integer> moves = new ArrayList<>();
+        double heur = -1.0;
+        for (int n = 0; n < size * size; n++) {
+            if (b.isLegal(p, n)) {
+                b.addSpot(getSide(), n);
+                if (staticEval(p, b) >= heur
+                    && !moves.contains(n)) {
+                    if (staticEval(p, b) > heur) {
+                        heur = staticEval(p, b);
+                        moves = new ArrayList<Integer>();
+                    }
+                    moves.add(n);
+                }
+                b.undo();
+            }
+        }
+        _moves = moves;
+        return heur;
+    }
+
+    /** Returns heuristic value of board B for player P.
+     *  Higher is better for P. */
+    private double staticEval(Side p, Board b) {
+        if (b.numOfSide(p.opposite()) == 0) {
+            return b.numOfSide(p) + 1.0;
+        }
+        return (double) b.numOfSide(p) / b.numOfSide(p.opposite());
+    }
+
+    /** Choose the random move in B with size P, Return the number. */
+    private int chooseRand(int p, Board b) {
+        Random rand = new Random();
+        int num  = rand.nextInt(p * p - 1) + 1;
+        while (true) {
+            if (b.isLegal(getSide(), num)) {
+                break;
+            }
+            num = rand.nextInt(p * p - 1) + 1;
+        }
+        return num;
+    }
+
+
+}

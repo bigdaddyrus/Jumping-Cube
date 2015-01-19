@@ -1,0 +1,14 @@
+******HELP************HELP************HELP************HELP************
+
+Textual User Interface:
+===
+             2r 1- 2r 2r 1- 2b
+             1- 1- 2r 1- 3r 1-
+             2r 3r 2r 3r 1- 2b
+             3r 1r 3r 2r 2r 2b
+             2b 4r 3r 1r 3r 2b
+             2b 2b 3b 2r 3b 1b
+===
+with the ‘===’ markers at the left margin and other lines indented four spaces. Here, ‘1-’ indicates a neutral square (necessarily with one spot), ‘Nr’ indicates a red square with N spots, and ‘Nb’ indicates a blue square with N spots. Don’t use the two ‘===’ markers anywhere else in your output. This gives the autograder a way to determine the state of your game board at any point. It does not change any of the state of the program.
+seed N If your program’s automated players use pseudo-random numbers to choose moves, this command sets the random seed to N (a long integer). This command has no effect if there is no random component to your automated players (or if you don’t use them in a particular game). It doesn’t matter exactly how you use N as long as your automated player behaves identically each time it is seeded with N. In the absence of a seed command, do what you want to seed your generator.
+help Print a brief summary of the commands.

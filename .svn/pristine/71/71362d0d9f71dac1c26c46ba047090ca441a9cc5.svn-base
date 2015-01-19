@@ -1,0 +1,237 @@
+package jump61;
+
+import static jump61.Side.*;
+import static jump61.Square.square;
+import java.util.ArrayList;
+import java.util.Stack;
+
+/** A Jump61 board state that may be modified.
+ *  @author Ruhao Xia
+ */
+class MutableBoard extends Board {
+
+    /** An N x N board in initial configuration. */
+    MutableBoard(int N) {
+        _size = N;
+        _board = new ArrayList<Square>(N*N);
+        for (int i = 0; i < N*N; i++) {
+            _board.add(i, square(WHITE, 1));
+        }
+        _undo = new Stack<Board>();
+    }
+
+    /** A board whose initial contents are copied from BOARD0, but whose
+     *  undo history is clear. */
+    MutableBoard(Board board0) {
+        clear(board0.size());
+        copy(board0);
+    }
+
+    @Override
+    void clear(int N) {
+        _size = N;
+        _board = new ArrayList<Square>(N*N);
+        for (int i = 0; i < N*N; i++) {
+            _board.add(i, square(WHITE, 1));
+        }
+        _undo = new Stack<Board>();
+        _numOfMoves = 0;
+        announce();
+    }
+
+    @Override
+    void copy(Board board) {
+        int sqsize = board.size() * board.size();
+        _board = new ArrayList<Square>(sqsize);
+        for (int i = 0; i < sqsize; i++) {
+            _board.add(i, board.get(i));
+        }
+    }
+
+    /** Copy the contents of BOARD into me, without modifying my undo
+     *  history.  Assumes BOARD and I have the same size. */
+    private void internalCopy(MutableBoard board) {
+        int sqsize = board.size() * board.size();
+        _board = new ArrayList<Square>(sqsize);
+        for (int i = 0; i < sqsize; i++) {
+            _board.add(i, board.get(i));
+        }
+    }
+
+    @Override
+    int size() {
+        return _size;
+    }
+
+    @Override
+    Square get(int n) {
+        return _board.get(n);
+    }
+
+    Square get(int r, int c) {
+        return get(sqNum(r, c));
+    }
+
+    @Override
+    int numOfSide(Side side) {
+        int total = 0;
+        for (Square value: _board) {
+            if (value.getSide().equals(side)) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    @Override
+    int numPieces() {
+        int total = 0;
+        for (Square value: _board) {
+            total += value.getSpots();
+        }
+        return total;
+    }
+
+    @Override
+    void addSpot(Side player, int r, int c) {
+        markUndo();
+        internalAddSpot(player, r, c);
+        announce();
+    }
+
+    @Override
+    void addSpot(Side player, int n) {
+        markUndo();
+        internalAddSpot(player, n);
+        announce();
+    }
+
+
+    @Override
+    void set(int r, int c, int num, Side player) {
+        internalSet(sqNum(r, c), square(player, num));
+    }
+
+    @Override
+    void set(int n, int num, Side player) {
+        internalSet(n, square(player, num));
+        announce();
+    }
+
+    @Override
+    void undo() {
+        if (_undo.empty()) {
+            System.out.println("No step to undo");
+        } else {
+            copy(_undo.pop());
+        }
+    }
+
+    @Override
+    Stack getUndo() {
+        return _undo;
+    }
+
+    @Override
+    boolean isFull(int i, int j) {
+        Square old = get(sqNum(i, j));
+        int oldSpots = old.getSpots();
+        if (oldSpots == neighbors(sqNum(i, j))) {
+            return true;
+        }
+        return false;
+    }
+
+    private void internalAddSpot(Side player, int r, int c) {
+        internalAddSpot(player, sqNum(r, c));
+    }
+
+    private void internalAddSpot(Side player, int n) {
+        Square old = get(n);
+        int oldSpots = old.getSpots();
+        if (oldSpots + 1 > neighbors(n)
+            && isLegal(player)) {
+            
+            // System.out.println("ths spot of overfull: " + this.toString());
+            overfull(player, n, old);
+        } else {
+            Square rep = square(player, oldSpots + 1);
+            internalSet(n, rep);
+        }
+    }
+
+    /** Helper method for dealing the overfull case recursively. */
+    private void overfull(Side player, int n, Square old) {
+        int r = row(n);
+        int c = col(n);
+        Square rep;
+        int newSpots = 1;
+        rep = square(player, newSpots);
+        internalSet(n, rep);
+        if (r > 1) {
+            internalAddSpot(player, r - 1, c);
+        }
+        if (c > 1) {
+            internalAddSpot(player, r, c - 1);
+        }
+        if (r < size()) {
+            internalAddSpot(player, r + 1, c);
+        }
+        if (c < size()) {
+            internalAddSpot(player, r, c + 1);
+        }
+    }
+
+    /** Record the beginning of a move in the undo history. */
+    private void markUndo() {
+        _undo.push(new MutableBoard(this));
+    }
+
+    /** Set the contents of the square with index IND to SQ. Update counts
+     *  of numbers of squares of each color.  */
+    private void internalSet(int ind, Square sq) {
+        _board.set(ind, sq);
+    }
+
+    /** Notify all Observers of a change. */
+    private void announce() {
+        setChanged();
+        notifyObservers();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof MutableBoard)) {
+            return obj.equals(this);
+        } else {
+            // REPLACE WITH SOLUTION
+            MutableBoard board1 = (MutableBoard) obj; 
+            if (board1.size() == this.size()) {
+                for (int i = 0; i < (this.size() * this.size()); i++) {
+                    if (!(board1.get(i).getSide().equals(this.get(i).getSide())
+                        && board1.get(i).getSpots() == this.get(i).getSpots())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    /** the SIZE of the board */
+    private int _size;
+
+    /** The array that represents the board */
+    private ArrayList<Square> _board;
+
+    private Stack<Board> _undo;
+
+    private int _numOfMoves;
+
+}

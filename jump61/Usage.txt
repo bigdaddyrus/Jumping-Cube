@@ -1,0 +1,13 @@
+- start Start playing from the current position, if not doing so already.
+
+- quit Exits the program.
+
+- auto P Stops the current game until the next start command and causes player P to be played by an automated player (an AI) on subsequent moves. The value P must be “red” or “blue” (ignore case—“Red” or “RED” also work). Initially, Blue is an automated player.
+
+- manual P Stops the current game until the next start command and causes player P to take moves from the terminal on subsequent moves. The value of P is as for the auto command. Initially, Red is a manual player.
+
+- size N Stops any current game, clears the board to its initial configuration, and sets the size of the board to N squares, where 2 ≤ N ≤ 10. Initially, N = 6.
+
+- set R C N P Stop any current game. Put N spots at row R and column C. P is either ‘b’ or ‘r’ (for blue or red,) indicating the color of the square. When N is 0, P is ignored and the square is cleared. N must be non-negative and less than or equal to the number of neighboring squares.
+
+- dump This command is especially for testing and debugging.
